@@ -30,14 +30,18 @@ describe( 'PasteFromOffice - filters', () => {
 			} );
 
 			it( 'replaces sub list-like elements with semantic nested lists', () => {
-				const html = '<p style="mso-list:l0 level1 lfo0"><span style="mso-list:Ignore">1.</span>Item 1</p><p style="mso-list:l0 level2 lfo1"><span style="mso-list:Ignore">1.</span>Item 1</p><p style="mso-list:l0 level1 lfo0"><span style="mso-list:Ignore">1.</span>Item 1</p>';
+				const html = '<p style="mso-list:l0 level1 lfo0"><span style="mso-list:Ignore">1.</span>Item 1</p>' +
+											'<p style="mso-list:l0 level2 lfo1"><span style="mso-list:Ignore">1.</span>Item 1</p>' +
+											'<p style="mso-list:l0 level1 lfo0"><span style="mso-list:Ignore">1.</span>Item 1</p>';
 				const view = htmlDataProcessor.toView( html );
 
 				transformListItemLikeElementsIntoLists( view, '', new View() );
 
 				expect( view.childCount ).to.equal( 1 );
 				expect( view.getChild( 0 ).name ).to.equal( 'ol' );
-				expect( stringify( view ) ).to.equal( '<ol><li style="mso-list:l0 level1 lfo0">Item 1</li><li><ol><li style="mso-list:l0 level2 lfo1">Item 1</li></ol></li><li style="mso-list:l0 level1 lfo0">Item 1</li></ol>' );
+				expect( stringify( view ) ).to.equal( '<ol><li style="mso-list:l0 level1 lfo0">Item 1</li>' +
+					'<li><ol><li style="mso-list:l0 level2 lfo1">Item 1</li></ol></li>' +
+					'<li style="mso-list:l0 level1 lfo0">Item 1</li></ol>' );
 			} );
 
 			it( 'replaces list-like elements with semantic lists with proper bullet type based on styles', () => {

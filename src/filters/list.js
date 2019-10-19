@@ -34,41 +34,39 @@ export function transformListItemLikeElementsIntoLists( documentFragment, styles
 		return;
 	}
 
-	let listTree = [];
+	const listTree = [];
 	let currentList = null;
 	// let parentList = null;
 
 	itemLikeElements.forEach( ( itemLikeElement, i ) => {
 		if ( !currentList || isNewListNeeded( itemLikeElements[ i - 1 ], itemLikeElement ) ) {
 			const listStyle = detectListStyle( itemLikeElement, stylesString );
-			
+
 			currentList = insertNewEmptyList( listStyle, itemLikeElement.element, writer );
-			listTree.push(currentList);
+			listTree.push( currentList );
 		}
-		
-		if (isSubListItem(itemLikeElements[ i - 1 ], itemLikeElement)) {
+
+		if ( isSubListItem( itemLikeElements[ i - 1 ], itemLikeElement ) ) {
 			const listStyle = detectListStyle( itemLikeElement, stylesString );
 			// parentList = currentList;
 			currentList = insertNewEmptySubList( listStyle, itemLikeElement.element, writer );
-			listTree.push(currentList);
+			listTree.push( currentList );
 		}
-		
+
 		const listItem = transformElementIntoListItem( itemLikeElement.element, writer );
-		
-		
-		if (itemLikeElements[ i - 1 ] && itemLikeElements[ i - 1 ].indent && itemLikeElement.indent < itemLikeElements[ i - 1 ].indent ) {
-			writer.appendChild( writer.createElement('li', {}, currentList ), listTree[listTree.length - 2] );
+
+		if ( itemLikeElements[ i - 1 ] && itemLikeElements[ i - 1 ].indent && itemLikeElement.indent < itemLikeElements[ i - 1 ].indent ) {
+			writer.appendChild( writer.createElement( 'li', {}, currentList ), listTree[ listTree.length - 2 ] );
 			listTree.pop();
-			currentList = listTree[listTree.length - 1];
+			currentList = listTree[ listTree.length - 1 ];
 		}
-		
+
 		writer.appendChild( listItem, currentList );
-		
 	} );
 
 	// Nest the lists in the listTree
-	for (let i = listTree.length - 1; i > 0; i--) {
-		writer.appendChild(writer.createElement('li', {}, listTree[i] ), listTree[i-1]);
+	for ( let i = listTree.length - 1; i > 0; i-- ) {
+		writer.appendChild( writer.createElement( 'li', {}, listTree[ i ] ), listTree[ i - 1 ] );
 	}
 }
 
@@ -298,7 +296,7 @@ function isList( element ) {
 // @returns {Boolean}
 function isSubListItem( previousItem, currentItem ) {
 	const previousSibling = currentItem.element.previousSibling;
-	
-	return ( previousSibling && previousItem && previousItem.indent &&  (currentItem.indent - previousItem.indent > 0));
+
+	return ( previousSibling && previousItem && previousItem.indent && ( currentItem.indent - previousItem.indent > 0 ) );
 }
 
