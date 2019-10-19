@@ -34,19 +34,42 @@ export function transformListItemLikeElementsIntoLists( documentFragment, styles
 		return;
 	}
 
+	let listTree = [];
 	let currentList = null;
+	// let parentList = null;
 
 	itemLikeElements.forEach( ( itemLikeElement, i ) => {
 		if ( !currentList || isNewListNeeded( itemLikeElements[ i - 1 ], itemLikeElement ) ) {
 			const listStyle = detectListStyle( itemLikeElement, stylesString );
-
+			
 			currentList = insertNewEmptyList( listStyle, itemLikeElement.element, writer );
+			listTree.push(currentList);
 		}
-
+		
+		if (isSubListItem(itemLikeElements[ i - 1 ], itemLikeElement)) {
+			const listStyle = detectListStyle( itemLikeElement, stylesString );
+			// parentList = currentList;
+			currentList = insertNewEmptySubList( listStyle, itemLikeElement.element, writer );
+			listTree.push(currentList);
+		}
+		
 		const listItem = transformElementIntoListItem( itemLikeElement.element, writer );
-
+		
+		
+		if (itemLikeElements[ i - 1 ] && itemLikeElements[ i - 1 ].indent && itemLikeElement.indent < itemLikeElements[ i - 1 ].indent ) {
+			writer.appendChild( writer.createElement('li', {}, currentList ), listTree[listTree.length - 2] );
+			listTree.pop();
+			currentList = listTree[listTree.length - 1];
+		}
+		
 		writer.appendChild( listItem, currentList );
+		
 	} );
+
+	// Nest the lists in the listTree
+	for (let i = listTree.length - 1; i > 0; i--) {
+		writer.appendChild(writer.createElement('li', {}, listTree[i] ), listTree[i-1]);
+	}
 }
 
 /**
@@ -168,6 +191,22 @@ function insertNewEmptyList( listStyle, element, writer ) {
 	return list;
 }
 
+// Creates empty sub list of a given type and inserts it after a specified element.
+//
+// @param {Object} listStyle List style object which determines the type of newly created list.
+// Usually a result of `detectListStyle()` function.
+// @param {module:engine/view/element~Element} element Element before which list is inserted.
+// @param {module:engine/view/upcastwriter~UpcastWriter} writer
+// @returns {module:engine/view/element~Element} Newly created list element.
+function insertNewEmptySubList( listStyle, element, writer ) {
+	const list = new Element( listStyle.type );
+	const position = 0;
+
+	writer.insertChild( position, list, element.parent );
+
+	return list;
+}
+
 // Transforms given element into a semantic list item. As the function operates on a provided
 // {module:engine/src/view/element~Element element} it will modify the view structure to which this element belongs.
 //
@@ -177,7 +216,6 @@ function insertNewEmptyList( listStyle, element, writer ) {
 // inserted in place of the old element (the reference to the old element is lost due to renaming).
 function transformElementIntoListItem( element, writer ) {
 	removeBulletElement( element, writer );
-
 	return writer.rename( 'li', element );
 }
 
@@ -255,3 +293,12 @@ function isNewListNeeded( previousItem, currentItem ) {
 function isList( element ) {
 	return element.is( 'ol' ) || element.is( 'ul' );
 }
+
+// Whether current item is a sub list item in the same list
+// @returns {Boolean}
+function isSubListItem( previousItem, currentItem ) {
+	const previousSibling = currentItem.element.previousSibling;
+	
+	return ( previousSibling && previousItem && previousItem.indent &&  (currentItem.indent - previousItem.indent > 0));
+}
+
